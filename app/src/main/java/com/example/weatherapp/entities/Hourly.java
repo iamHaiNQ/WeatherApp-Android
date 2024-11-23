@@ -5,7 +5,7 @@ public class Hourly {
     private int temp;
     private String picPath;
 
-    public Hourly(String hour, int temp, String picPath) {
+    public Hourly(String hour, double temp, String picPath) {
         this.hour = hour;
         this.temp = temp;
         this.picPath = picPath;

@@ -1,6 +1,7 @@
 package com.example.weatherapp;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
@@ -28,6 +29,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -49,13 +51,41 @@ public class MainActivity extends AppCompatActivity {
     private String nameCity = "";
     private String dateTime, weatherDescription,weatherIcon;
     private String hour, iconHourly;
-    private int tempHourly;
-    private int  temp, humidity, feelsLike, speed;
+    private double tempHourly;
+    private double  temp, humidity, feelsLike, speed;
     private long pressBackTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
+    }
+
+    private void setMapping() {
+        recyclerViewHourly = findViewById(R.id.recyclerViewHourly);
+        textNext5Days = findViewById(R.id.textNext5Days);
+        textDateTime = findViewById(R.id.textDateTime);
+        editTextSearch = findViewById(R.id.editTextSearch);
+        textState = findViewById(R.id.textState);
+        textNameCity = findViewById(R.id.textNameCity);
+        textTemperature = findViewById(R.id.textTemperature);
+        imgIconWeather = findViewById(R.id.imgIconWeather);
+        textPercentHumidity = findViewById(R.id.textPercentHumidity);
+        textWindSpeed = findViewById(R.id.textWindSpeed);
+        textFeelsLike = findViewById(R.id.textFeelsLike);
+        imgSearch = findViewById(R.id.imgSearch);
+    }
+
+    private void setIntentExtras() {
+        String city = editTextSearch.getText().toString();
+        Intent intent = new Intent(MainActivity.this, FutureActivity.class);
+        intent.putExtra("name", nameCity);
+        intent.putExtra("state", textState.getText().toString());
+        intent.putExtra("temperature", textTemperature.getText().toString());
+        intent.putExtra("feelsLike", textFeelsLike.getText().toString());
+        intent.putExtra("windSpeed", textWindSpeed.getText().toString());
+        intent.putExtra("humidity", textPercentHumidity.getText().toString());
+        intent.putExtra("imgIconWeather", weatherIcon);
+        startActivity(intent);
     }
 
     private void getCurrentWeatherData(String lat, String lon) {
@@ -90,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
                 );
         requestQueue.add(stringRequest);
     }
+
+
     private void getHourlyData(String lat, String lon) {
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         URL url = new URL();
@@ -97,19 +129,37 @@ public class MainActivity extends AppCompatActivity {
         @SuppressLint("NotifyDataSetChanged") StringRequest stringRequest = new StringRequest(Request.Method.GET, url.getBaseURL(),
                 response -> {
                     try {
-                        JSONObject jsonObject = new JSONObject((Map) response);
+                        JSONObject jsonObject = new JSONObject(response);
                         JSONArray jsonArray = jsonObject.getJSONArray("hourly");
+                        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+                        SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+                        String todayDate = dateFormat.format(new Date());
+                        for(int i =0 ; i < jsonArray.length(); i++){
+                            JSONObject hourly = jsonArray.getJSONObject(i);
+                            String dt = hourly.getString("dt");
+                            Date date = inputFormat.parse(dt);
+                            hour = outputFormat.format(date);
+                            String entryDate = dateFormat.format(date);
 
+                            if(entryDate.equals(todayDate)){
+                                double tempHourly = hourly.getDouble("temp");
+                                String mainWeather = hourly.getJSONArray("weather").getJSONObject(0).getString("main");
+                                String weatherDescription = hourly.getJSONArray("weather").getJSONObject(0).getString("description");
+                                String weatherIcon = hourly.getJSONArray("weather").getJSONObject(0).getString("icon");
 
-                    } catch (JSONException e) {
+                                items.add(new Hourly(hour, tempHourly, iconHourly));
+                            }
+                        }
+                        hourlyAdapter.notifyDataSetChanged();
+                    } catch (JSONException | ParseException e) {
                         throw new RuntimeException(e);
                     }
-                });
+                },error -> Log.e("result", "JSON parsing error: " + error.getMessage())
+        );
+        requestQueue.add(stringRequest);
     }
 
-
-
-    @SuppressLint({"SetTextI18n", "DiscouragedApi"})
     private void upDateUI() {
         textNameCity.setText(nameCity);
         textDateTime.setText(dateTime);
