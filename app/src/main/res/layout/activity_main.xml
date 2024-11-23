@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/backgroundColor"
+    tools:context=".activities.MainActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            tools:ignore="UseCompoundDrawables">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/editTextSearch"
+                    android:layout_width="300dp"
+                    android:layout_height="45dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="0.6"
+                    android:background="@drawable/background_search"
+                    android:drawableStart="@drawable/ic_search"
+                    android:drawablePadding="10dp"
+                    android:hint="@string/search_city"
+                    android:imeOptions="actionDone"
+                    android:importantForAutofill="no"
+                    android:includeFontPadding="false"
+                    android:inputType="text"
+                    android:paddingStart="16dp"
+                    android:textColor="@color/black"
+                    tools:ignore="RtlSymmetry" />
+
+                <ImageView
+                    android:id="@+id/imgSearch"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="0.4"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_search" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/textNameCity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:textAlignment="center"
+                android:textColor="@color/textColor"
+                android:textSize="20sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textState"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:includeFontPadding="false"
+                android:textAlignment="center"
+                android:textColor="@color/textColor"
+                android:textSize="19sp" />
+
+            <ImageView
+                android:id="@+id/imgIconWeather"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/textDateTime"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:includeFontPadding="false"
+                android:textAlignment="center"
+                android:textColor="@color/textColor"
+                android:textSize="19sp" />
+
+            <TextView
+                android:id="@+id/textTemperature"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:includeFontPadding="false"
+                android:textAlignment="center"
+                android:textColor="@color/textColor"
+                android:textSize="63sp"
+                android:textStyle="bold" />
+
+            <include layout="@layout/layout_weather_card" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="24dp"
+                    android:layout_weight="1"
+                    android:includeFontPadding="false"
+                    android:text="@string/today"
+                    android:textColor="@color/textColor"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:ignore="InefficientWeight" />
+
+                <TextView
+                    android:id="@+id/textNext5Days"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="24dp"
+                    android:text="@string/next_5_days"
+                    android:textColor="@color/textColor"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewHourly"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="20dp"
+                android:clipToPadding="false"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp" />
+        </LinearLayout>
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
