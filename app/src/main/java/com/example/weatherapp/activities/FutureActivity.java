@@ -1,4 +1,4 @@
-package com.example.weatherapp.activites;
+package com.example.weatherapp.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,7 +46,7 @@ public class FutureActivity extends AppCompatActivity {
     private TextView textFeels, textWind, textHumidity;
     private ImageView imgIcon, imgBack;
 
-    private String nameCity = "";
+    private double latitude, longitude;
 
     @SuppressLint("DiscouragedApi")
     @Override
@@ -68,6 +69,8 @@ public class FutureActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
         String city = intent.getStringExtra("name");
+        latitude = intent.getDoubleExtra("latitude", 21);
+        longitude = intent.getDoubleExtra("longitude", 102);
         textTemperatureToday.setText(intent.getStringExtra("temperature"));
         textWeatherToday.setText(intent.getStringExtra("state"));
         textFeels.setText(intent.getStringExtra("feelsLike"));
@@ -78,14 +81,9 @@ public class FutureActivity extends AppCompatActivity {
         if (iconImg != null) {
             imgIcon.setImageResource(getResources().getIdentifier(String.valueOf(UpdateUI.getIconID(iconImg)), "drawable", getPackageName()));
         }
-        Log.d("result", "Du lieu qua: " + city);
-        if (city.isEmpty()) {
-            nameCity = "Hanoi";
-            get5DaysData(nameCity);
-        } else {
-            nameCity = city;
-            get5DaysData(nameCity);
-        }
+        Log.d("Latitude", "Latitude: " + latitude);
+        Log.d("Longitude", "Longitude: " + longitude);
+        get5DaysData(latitude, longitude);
     }
 
     private void setMapping() {
@@ -99,56 +97,50 @@ public class FutureActivity extends AppCompatActivity {
         imgBack = findViewById(R.id.imgback);
     }
 
-    private void get5DaysData(String city) {
-        URL url = new URL();
-        url.setLink(city);
+    private void get5DaysData(double lat, double lon) {
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        @SuppressLint("NotifyDataSetChanged") StringRequest stringRequest = new StringRequest(Request.Method.GET, url.getLink(),
+        URL url = new URL();
+        url.setBaseURL(lat, lon);
+        @SuppressLint("NotifyDataSetChanged")
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url.getBaseURL(),
                 response -> {
                     try {
+                        JSONObject jsonObject = new JSONObject(response);
+                        JSONArray jsonArray = jsonObject.getJSONArray("daily");
+                        SimpleDateFormat outputFormat = new SimpleDateFormat("EEE", Locale.getDefault());
                         items.clear();
 
-                        // Use a TreeMap to automatically sort the entries by date
-                        TreeMap<String, Daily> dailyForecasts = new TreeMap<>();
-                        JSONObject jsonObject = new JSONObject(response);
-                        JSONArray jsonArray = jsonObject.getJSONArray("list");
-                        for (int i = 0; i < jsonArray.length(); i++) {
-                            JSONObject jsonObjectList = jsonArray.getJSONObject(i);
-                            String day = jsonObjectList.getString("dt");
+                        int maxDay = 5;
+                        int count = 0;
 
-                            long dt = Long.parseLong(day);
-                            Date date = new Date(dt * 1000L);
-                            @SuppressLint("SimpleDateFormat") SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEE", Locale.ENGLISH);
-                            String dateTime = simpleDateFormat.format(date);
-                            @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-                            String dateOnly = dateFormat.format(date);
+                        for (int i = 0; i < jsonArray.length() && count < maxDay; i++) {
+                            JSONObject daily = jsonArray.getJSONObject(i);
 
-                            JSONObject jsonObjectMain = jsonObjectList.getJSONObject("main");
-                            String maxTemp = jsonObjectMain.getString("temp_max");
-                            String minTemp = jsonObjectMain.getString("temp_min");
+                            long dt = daily.getLong("dt") * 1000L;
+                            Date date = new Date(dt);
+                            String day = outputFormat.format(date);
 
-                            double a = Double.parseDouble(maxTemp);
-                            double b = Double.parseDouble(minTemp);
-                            int max = (int) a;
-                            int min = (int) b;
+                            JSONObject tempObj = daily.getJSONObject("temp");
+                            double tempMin = tempObj.getDouble("min");  // Truy cập 'min' từ đối tượng temp
+                            double tempMax = tempObj.getDouble("max");  // Truy cập 'max' từ đối tượng temp
+                            String weatherDescription = daily.getJSONArray("weather").getJSONObject(0).getString("description");
+                            String iconDaily = daily.getJSONArray("weather").getJSONObject(0).getString("icon");
 
-                            JSONArray jsonArrayWeather = jsonObjectList.getJSONArray("weather");
-                            JSONObject jsonObjectWeather = jsonArrayWeather.getJSONObject(0);
-                            String status = jsonObjectWeather.getString("description");
-                            String icon = jsonObjectWeather.getString("icon");
-
-                            // Only store the first forecast of each day
-                            if (!dailyForecasts.containsKey(dateOnly)) {
-                                dailyForecasts.put(dateOnly, new Daily(dateTime, icon, status, max, min));
-                            }
+                            items.add(new Daily(day, iconDaily, weatherDescription, (int) tempMin, (int) tempMax));
+                            count++;
                         }
-                        items.addAll(dailyForecasts.values());
                         dailyAdapter.notifyDataSetChanged();
+
                     } catch (JSONException e) {
-                        throw new RuntimeException(e);
+                        Log.e("get5DayData", "Error parsing JSON", e);
+                        Toast.makeText(this, "Error parsing daily data", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Log.e("result", "JSON parsing error: " + error.getMessage()));
+                error -> {
+                    Log.e("get5dayData", "Error fetching data: " + error.getMessage());
+                    Toast.makeText(this, "Error fetching day data", Toast.LENGTH_SHORT).show();
+                }
+        );
         requestQueue.add(stringRequest);
     }
 }

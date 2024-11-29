@@ -1,4 +1,4 @@
-package com.example.weatherapp.activites;
+package com.example.weatherapp.activities;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -64,8 +64,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -100,6 +102,8 @@ public class MainActivity extends AppCompatActivity {
     private double  temp, humidity, feelsLike, speed;
     private long pressBackTime;
 
+    private double latitude , longitude;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,11 +133,10 @@ public class MainActivity extends AppCompatActivity {
                 super.onLocationResult(locationResult);
                 mCurrentLocation = locationResult.getLastLocation();
 
-                double latitude = mCurrentLocation.getLatitude();
-                double longitude = mCurrentLocation.getLongitude();
+                latitude = mCurrentLocation.getLatitude();
+                longitude = mCurrentLocation.getLongitude();
                 getCurrentWeatherData(latitude, longitude);
                 getHourlyData(latitude, longitude);
-
                 getCityFromLatLon(latitude, longitude);
             }
         };
@@ -281,26 +284,26 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Error fetching address", Toast.LENGTH_SHORT).show();
         }
     }
-//    private void convertCityToLatLon(String city) {
-//        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-//        try {
-//            List<Address> addresses = geocoder.getFromLocationName(city, 1); // Lấy 1 kết quả phù hợp
-//            if ((addresses != null) && !addresses.isEmpty()) {
-//                Address address = addresses.get(0);
-//                double lat = address.getLatitude();
-//                double lon = address.getLongitude();
-//
-//                // Gọi API thời tiết với tọa độ
-//                getCurrentWeatherData(lat, lon);
-//                getHourlyData(lat, lon);
-//            } else {
-//                Toast.makeText(this, "City not found. Please check the name.", Toast.LENGTH_SHORT).show();
-//            }
-//        } catch (IOException e) {
-//            Log.e("GeocoderError", "Error converting city to lat/lon: " + e.getMessage());
-//            Toast.makeText(this, "Unable to convert city to coordinates.", Toast.LENGTH_SHORT).show();
-//        }
-//    }
+    private void convertCityToLatLon(String city) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(city, 1); // Lấy 1 kết quả phù hợp
+            if ((addresses != null) && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                double lat = address.getLatitude();
+                double lon = address.getLongitude();
+
+                // Gọi API thời tiết với tọa độ
+                getCurrentWeatherData(lat, lon);
+                getHourlyData(lat, lon);
+            } else {
+                Toast.makeText(this, "City not found. Please check the name.", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Log.e("GeocoderError", "Error converting city to lat/lon: " + e.getMessage());
+            Toast.makeText(this, "Unable to convert city to coordinates.", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void setMapping() {
         recyclerViewHourly = findViewById(R.id.recyclerViewHourly);
@@ -318,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setIntentExtras() {
-        String city = editTextSearch.getText().toString();
         Intent intent = new Intent(MainActivity.this, FutureActivity.class);
-        intent.putExtra("name", nameCity);
+        intent.putExtra("lat", latitude);
+        intent.putExtra("lon", longitude);
         intent.putExtra("state", textState.getText().toString());
         intent.putExtra("temperature", textTemperature.getText().toString());
         intent.putExtra("feelsLike", textFeelsLike.getText().toString());
@@ -328,6 +331,8 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra("humidity", textPercentHumidity.getText().toString());
         intent.putExtra("imgIconWeather", weatherIcon);
         startActivity(intent);
+        Log.d("Latitude", "Latitude: " + latitude);
+        Log.d("Longitude", "Longitude: " + longitude);
     }
 
     private void getCurrentWeatherData(double lat, double lon) {
@@ -337,71 +342,100 @@ public class MainActivity extends AppCompatActivity {
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url.getBaseURL(),
                 response -> {
                     try {
-                        items.clear();
+                        Log.d(TAG, "Response: " + response); // Kiểm tra phản hồi
                         JSONObject jsonObject = new JSONObject(response);
-                        JSONObject current = jsonObject.getJSONObject("current");
-                        String day = current.getString("dt");
-                        long dt = Long.parseLong(day);
-                        Date date = new Date(dt * 1000L);
-                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("EEEE yyyy-MM-dd | HH:mm a", Locale.ENGLISH);
-                        dateTime = simpleDateFormat.format(date);
-                        temp = current.getDouble("temp");
-                        feelsLike = current.getDouble("feels_like");
-                        humidity = current.getInt("humidity");
-                        speed = current.getDouble("speed");
-                        mainWeather = current.getJSONArray("weather").getJSONObject(0).getString("main");
-                        weatherDescription = current.getJSONArray("weather").getJSONObject(0).getString("description");
-                        weatherIcon = current.getJSONArray("weather").getJSONObject(0).getString("icon");
-                        upDateUI();
 
+                        if (jsonObject.has("current")) {
+                            JSONObject current = jsonObject.getJSONObject("current");
 
+                            // Lấy dữ liệu từ JSON
+                            String date = String.valueOf(current.getLong("dt"));
+                            dateTime = DateTimeFormatter.ofPattern("EEEE yyyy-MM-dd | HH:mm a", Locale.ENGLISH)
+                                    .withZone(ZoneId.systemDefault())
+                                    .format(Instant.ofEpochSecond(Long.parseLong(date)));
+                            temp = current.getDouble("temp");
+                            feelsLike = current.getDouble("feels_like");
+                            humidity = current.getInt("humidity");
+                            speed = current.getDouble("wind_speed");
+                            weatherDescription = current.getJSONArray("weather")
+                                    .getJSONObject(0)
+                                    .getString("description");
+                            weatherIcon = current.getJSONArray("weather")
+                                    .getJSONObject(0)
+                                    .getString("icon");
+
+                            // Cập nhật giao diện
+                            upDateUI();
+                        } else {
+                            Log.e(TAG, "Missing 'current' object in JSON");
+                        }
                     } catch (JSONException e) {
-                        Toast.makeText(this, "Erorr json", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Error parsing JSON: " + e.getMessage());
+                        Toast.makeText(this, "Error parsing weather data", Toast.LENGTH_SHORT).show();
                     }
                 },
-                error -> Log.e("result", "Json parsing error: " + error.getMessage())
-                );
+                error -> {
+                    Log.e(TAG, "Error in API request: " + error.getMessage());
+                    Toast.makeText(this, "Error fetching weather data", Toast.LENGTH_SHORT).show();
+                });
         requestQueue.add(stringRequest);
     }
+
 
 
     private void getHourlyData(double lat, double lon) {
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         URL url = new URL();
         url.setBaseURL(lat, lon);
-        @SuppressLint("NotifyDataSetChanged") StringRequest stringRequest = new StringRequest(Request.Method.GET, url.getBaseURL(),
+        @SuppressLint("NotifyDataSetChanged")
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, url.getBaseURL(),
                 response -> {
                     try {
                         JSONObject jsonObject = new JSONObject(response);
                         JSONArray jsonArray = jsonObject.getJSONArray("hourly");
-                        SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+
+                        // Date format for output
                         SimpleDateFormat outputFormat = new SimpleDateFormat("HH:mm", Locale.ENGLISH);
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-                        String todayDate = dateFormat.format(new Date());
-                        for(int i =0 ; i < jsonArray.length(); i++){
+                        items.clear(); // Xóa dữ liệu cũ để cập nhật mới
+
+                        int maxHours = 24; // Số giờ cần hiển thị
+                        int count = 0; // Đếm số giờ đã thêm vào danh sách
+
+                        for (int i = 0; i < jsonArray.length() && count < maxHours; i++) {
                             JSONObject hourly = jsonArray.getJSONObject(i);
-                            String dt = hourly.getString("dt");
-                            Date date = inputFormat.parse(dt);
-                            hour = outputFormat.format(date);
-                            String entryDate = dateFormat.format(date);
 
-                            if(entryDate.equals(todayDate)){
-                                tempHourly = hourly.getDouble("temp");
-//                                String mainWeather = hourly.getJSONArray("weather").getJSONObject(0).getString("main");
-                                weatherDescription = hourly.getJSONArray("weather").getJSONObject(0).getString("description");
-                                iconHourly = hourly.getJSONArray("weather").getJSONObject(0).getString("icon");
+                            // Parse timestamp (epoch) to Date
+                            long dt = hourly.getLong("dt") * 1000L; // Convert seconds to milliseconds
+                            Date date = new Date(dt);
+                            String hour = outputFormat.format(date);
 
-                                items.add(new Hourly(hour, tempHourly, iconHourly));
-                            }
+                            // Lấy dữ liệu thời tiết
+                            double tempHourly = hourly.getDouble("temp");
+                            String weatherDescription = hourly.getJSONArray("weather").getJSONObject(0).getString("description");
+                            String iconHourly = hourly.getJSONArray("weather").getJSONObject(0).getString("icon");
+
+                            // Thêm vào danh sách
+                            items.add(new Hourly(hour, tempHourly, iconHourly));
+                            count++;
                         }
+
+                        // Cập nhật adapter
                         hourlyAdapter.notifyDataSetChanged();
-                    } catch (JSONException | ParseException e) {
-                        Toast.makeText(this, "Erorr json hourly", Toast.LENGTH_SHORT).show();
+                    } catch (JSONException e) {
+                        Log.e("getHourlyData", "Error parsing JSON", e);
+                        Toast.makeText(this, "Error parsing hourly data", Toast.LENGTH_SHORT).show();
                     }
-                },error -> Log.e("result", "JSON parsing error: " + error.getMessage())
+                },
+                error -> {
+                    Log.e("getHourlyData", "Error fetching data: " + error.getMessage());
+                    Toast.makeText(this, "Error fetching hourly data", Toast.LENGTH_SHORT).show();
+                }
         );
+
         requestQueue.add(stringRequest);
     }
+
+
 
     @SuppressLint("SetTextI18n")
     private void upDateUI() {

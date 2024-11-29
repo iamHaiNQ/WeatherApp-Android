@@ -8,7 +8,7 @@ public class URL {
 
     }
     public void setBaseURL(double lat , double lon){
-        baseURL = "http://api.openweathermap.org/data/3.0/onecall?lat= " + lat + "&lon= " + lon +  "&appid=" + apiKey + " &units=metric";
+        baseURL = "https://api.openweathermap.org/data/3.0/onecall?lat=" + lat + "&lon=" + lon+ "&appid=54a2850ba731a35944a5129657a55056&units=metric";
     }
     public String getBaseURL(){
         return baseURL;
