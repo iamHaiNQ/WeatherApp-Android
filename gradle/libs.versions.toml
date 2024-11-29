@@ -9,6 +9,9 @@ activity = "1.9.3"
 constraintlayout = "2.2.0"
 playServicesLocation = "21.3.0"
 volley = "1.2.1"
+lottie = "6.6.0"
+playServicesLocationVersion = "21.0.1"
+dexter = "6.2.3"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -20,6 +23,9 @@ activity = { group = "androidx.activity", name = "activity", version.ref = "acti
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 volley = { group = "com.android.volley", name = "volley", version.ref = "volley" }
+lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }
+gms-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocationVersion" }
+dexter = { group = "com.karumi", name = "dexter", version.ref = "dexter" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

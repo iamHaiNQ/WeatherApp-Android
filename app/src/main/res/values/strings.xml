@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WeatherApp</string>
+    <string name="app_name">Weather</string>
     <string name="mostly_cloudy">Mostly Cloudy</string>
     <string name="textDateTime">Mon June 17 | 10:00 AM</string>
     <string name="textTemperature">25°C</string>

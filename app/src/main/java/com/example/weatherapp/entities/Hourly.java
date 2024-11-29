@@ -2,7 +2,7 @@ package com.example.weatherapp.entities;
 
 public class Hourly {
     private String hour;
-    private int temp;
+    private double temp;
     private String picPath;
 
     public Hourly(String hour, double temp, String picPath) {
@@ -19,11 +19,11 @@ public class Hourly {
         this.hour = hour;
     }
 
-    public int getTemp() {
+    public double getTemp() {
         return temp;
     }
 
-    public void setTemp(int temp) {
+    public void setTemp(double temp) {
         this.temp = temp;
     }
 
