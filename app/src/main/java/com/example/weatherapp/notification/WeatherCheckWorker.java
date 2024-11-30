@@ -99,7 +99,7 @@ public class WeatherCheckWorker extends Worker {
                 (idHourly >= 700 && idHourly <= 790) ;
     }
 
-    @SuppressLint("MissingPermission")
+    @SuppressLint({"MissingPermission", "ObsoleteSdkInt"})
     private void sendBadWeatherNotification(String weatherDescription, String icon) {
         String channelId = "weather_alert_channel";
         String channelName = "Weather Alerts";

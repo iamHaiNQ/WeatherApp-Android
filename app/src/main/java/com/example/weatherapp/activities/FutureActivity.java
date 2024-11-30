@@ -35,7 +35,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TreeMap;
 
 public class FutureActivity extends AppCompatActivity {
     private ArrayList<Daily> items;
@@ -46,7 +45,6 @@ public class FutureActivity extends AppCompatActivity {
     private TextView textFeels, textWind, textHumidity;
     private ImageView imgIcon, imgBack;
 
-    private double latitude, longitude;
 
     @SuppressLint("DiscouragedApi")
     @Override
@@ -68,8 +66,8 @@ public class FutureActivity extends AppCompatActivity {
         imgBack.setOnClickListener(v -> finish());
 
         Intent intent = getIntent();
-        latitude = intent.hasExtra("lat") ? intent.getDoubleExtra("lat", 0) : 0;
-        longitude = intent.hasExtra("lon") ? intent.getDoubleExtra("lon", 0) : 0;
+        double latitude = intent.hasExtra("lat") ? intent.getDoubleExtra("lat", 0) : 0;
+        double longitude = intent.hasExtra("lon") ? intent.getDoubleExtra("lon", 0) : 0;
 
         if (latitude == 0 || longitude == 0) {
             Toast.makeText(this, "Invalid location data", Toast.LENGTH_SHORT).show();

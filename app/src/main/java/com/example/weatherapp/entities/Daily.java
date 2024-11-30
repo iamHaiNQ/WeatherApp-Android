@@ -1,7 +1,5 @@
 package com.example.weatherapp.entities;
 
-import androidx.recyclerview.widget.RecyclerView;
-
 import java.util.ArrayList;
 
 public class Daily {

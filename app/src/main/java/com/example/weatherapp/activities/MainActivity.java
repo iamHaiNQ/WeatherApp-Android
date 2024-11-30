@@ -4,18 +4,13 @@ import static com.example.weatherapp.UpdateUI.getIconID;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
@@ -29,8 +24,6 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -58,7 +51,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.android.gms.location.SettingsClient;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.karumi.dexter.BuildConfig;
 import com.karumi.dexter.Dexter;
@@ -105,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView imgIconWeather, imgSearch;
     private EditText editTextSearch;
     private String nameCity = "";
-    private String dateTime, weatherDescription,weatherIcon, mainWeather;
+    private String dateTime, weatherDescription,weatherIcon;
     private String hour, iconHourly;
     private double tempHourly;
     private double  temp, humidity, feelsLike, speed;
@@ -142,15 +134,18 @@ public class MainActivity extends AppCompatActivity {
                 super.onLocationResult(locationResult);
                 mCurrentLocation = locationResult.getLastLocation();
 
-                latitude = mCurrentLocation.getLatitude();
-                longitude = mCurrentLocation.getLongitude();
-                getCurrentWeatherData(latitude, longitude);
-                getHourlyData(latitude, longitude);
-                getCityFromLatLon(latitude, longitude);
+                if (mCurrentLocation != null) {
+                    latitude = mCurrentLocation.getLatitude();
+                    longitude = mCurrentLocation.getLongitude();
+                    getCurrentWeatherData(latitude, longitude);
+                    getHourlyData(latitude, longitude);
+                    getCityFromLatLon(latitude, longitude);
 
-                WeatherScheduler.scheduleWeatherCheck(MainActivity.this, latitude, longitude);
+                    WeatherScheduler.scheduleWeatherCheck(MainActivity.this, latitude, longitude);
 
-                stopLocationUpdates();
+                    stopLocationUpdates();
+                }
+
             }
         };
 
@@ -217,27 +212,24 @@ public class MainActivity extends AppCompatActivity {
                mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
             }
         })
-                .addOnFailureListener(this, new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        int statusCode = ((ApiException) e ).getStatusCode();
-                        switch (statusCode){
-                            case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                                Log.i(TAG, "Location settings are not satisfied. Attempting to upgrade location settings");
+                .addOnFailureListener(this, e -> {
+                    int statusCode = ((ApiException) e ).getStatusCode();
+                    switch (statusCode){
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            Log.i(TAG, "Location settings are not satisfied. Attempting to upgrade location settings");
 
-                                try {
-                                    ResolvableApiException rae = (ResolvableApiException) e;
-                                    rae.startResolutionForResult(MainActivity.this, REQUEST_CHECK_SETTINGS);
-                                } catch (IntentSender.SendIntentException sie) {
-                                    Log.i(TAG, "PendingItent unable to execute request");
-                                }
-                                break;
-                            case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                                String errorMessage = "Location settings are inadequate, and cannot be fixed here, Fix in settings";
-                                Log.e(TAG, errorMessage);
+                            try {
+                                ResolvableApiException rae = (ResolvableApiException) e;
+                                rae.startResolutionForResult(MainActivity.this, REQUEST_CHECK_SETTINGS);
+                            } catch (IntentSender.SendIntentException sie) {
+                                Log.i(TAG, "PendingItent unable to execute request");
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            String errorMessage = "Location settings are inadequate, and cannot be fixed here, Fix in settings";
+                            Log.e(TAG, errorMessage);
 
-                                Toast.makeText(MainActivity.this , errorMessage, Toast.LENGTH_SHORT).show();
-                        }
+                            Toast.makeText(MainActivity.this , errorMessage, Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -267,6 +259,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private void getCityFromLatLon(double lat, double lon) {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
         List<Address> addresses = null;
@@ -276,7 +269,6 @@ public class MainActivity extends AppCompatActivity {
             if (addresses != null && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
                 nameCity = address.getLocality();
-                // Nếu không có Locality, dùng một trường khác như AdminArea
                 if (nameCity == null || nameCity.isEmpty()) {
                     nameCity = address.getAdminArea(); // Tỉnh, bang
                 }
@@ -292,7 +284,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "No address found", Toast.LENGTH_SHORT).show();
             }
         } catch (IOException e) {
-            e.printStackTrace();
             Toast.makeText(this, "Error fetching address", Toast.LENGTH_SHORT).show();
         }
     }
@@ -411,7 +402,6 @@ public class MainActivity extends AppCompatActivity {
 
                         int maxHours = 24; // Số giờ cần hiển thị
                         int count = 0; // Đếm số giờ đã thêm vào danh sách
-                        boolean badWeatherAlerted = false;
 
                         for (int i = 0; i < jsonArray.length() && count < maxHours; i++) {
                             JSONObject hourly = jsonArray.getJSONObject(i);
@@ -423,7 +413,6 @@ public class MainActivity extends AppCompatActivity {
 
                             // Lấy dữ liệu thời tiết
                             tempHourly = hourly.getDouble("temp");
-                            int idHourly = hourly.getJSONArray("weather").getJSONObject(0).getInt("id");
                             weatherDescription = hourly.getJSONArray("weather").getJSONObject(0).getString("description");
                             iconHourly = hourly.getJSONArray("weather").getJSONObject(0).getString("icon");
 
@@ -447,7 +436,7 @@ public class MainActivity extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
-    @SuppressLint("SetTextI18n")
+    @SuppressLint({"SetTextI18n", "DiscouragedApi"})
     private void upDateUI() {
         textNameCity.setText(nameCity);
         textDateTime.setText(dateTime);
@@ -459,16 +448,14 @@ public class MainActivity extends AppCompatActivity {
         imgIconWeather.setImageResource(getResources().getIdentifier(String.valueOf(getIconID(weatherIcon)), "drawable", getPackageName()));
     }
 
-    @Override
-    public void onBackPressed() {
-        if (System.currentTimeMillis() - pressBackTime < 2000) {
-            super.onBackPressed();
-            return;
-        } else {
-            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
-        }
-        pressBackTime = System.currentTimeMillis();
-    }
-
-
+//    @Override
+//    public void onBackPressed() {
+//        if (System.currentTimeMillis() - pressBackTime < 2000) {
+//            super.onBackPressed();
+//            return;
+//        } else {
+//            Toast.makeText(this, "Press back again to exit", Toast.LENGTH_SHORT).show();
+//        }
+//        pressBackTime = System.currentTimeMillis();
+//    }
 }

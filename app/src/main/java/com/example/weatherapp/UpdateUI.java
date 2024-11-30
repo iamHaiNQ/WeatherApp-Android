@@ -1,6 +1,5 @@
 package com.example.weatherapp;
 
-import com.example.weatherapp.R;
 
 public class UpdateUI {
     public static int getIconID(String icon) {
