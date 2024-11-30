@@ -85,8 +85,6 @@ public class FutureActivity extends AppCompatActivity {
         if (iconImg != null) {
             imgIcon.setImageResource(getResources().getIdentifier(String.valueOf(UpdateUI.getIconID(iconImg)), "drawable", getPackageName()));
         }
-        Log.d("Latitude", "Latitude: " + latitude);
-        Log.d("Longitude", "Longitude: " + longitude);
         get5DaysData(latitude, longitude);
     }
 

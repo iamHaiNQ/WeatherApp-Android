@@ -1,14 +1,21 @@
 package com.example.weatherapp.activities;
 
+import static com.example.weatherapp.UpdateUI.getIconID;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
@@ -22,6 +29,8 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -35,9 +44,9 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.weatherapp.R;
 import com.example.weatherapp.URL;
-import com.example.weatherapp.UpdateUI;
 import com.example.weatherapp.adapter.HourlyAdapter;
 import com.example.weatherapp.entities.Hourly;
+import com.example.weatherapp.notification.WeatherScheduler;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -139,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
                 getHourlyData(latitude, longitude);
                 getCityFromLatLon(latitude, longitude);
 
+                WeatherScheduler.scheduleWeatherCheck(MainActivity.this, latitude, longitude);
+
                 stopLocationUpdates();
             }
         };
@@ -186,7 +197,6 @@ public class MainActivity extends AppCompatActivity {
                 convertCityToLatLon(city);
             }
         });
-
     }
 
     private void openSettings(){
@@ -334,8 +344,6 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra("humidity", textPercentHumidity.getText().toString());
         intent.putExtra("imgIconWeather", weatherIcon);
         startActivity(intent);
-        Log.d("Latitude", "Latitude: " + latitude);
-        Log.d("Longitude", "Longitude: " + longitude);
     }
 
     private void getCurrentWeatherData(double lat, double lon) {
@@ -403,6 +411,7 @@ public class MainActivity extends AppCompatActivity {
 
                         int maxHours = 24; // Số giờ cần hiển thị
                         int count = 0; // Đếm số giờ đã thêm vào danh sách
+                        boolean badWeatherAlerted = false;
 
                         for (int i = 0; i < jsonArray.length() && count < maxHours; i++) {
                             JSONObject hourly = jsonArray.getJSONObject(i);
@@ -414,6 +423,7 @@ public class MainActivity extends AppCompatActivity {
 
                             // Lấy dữ liệu thời tiết
                             tempHourly = hourly.getDouble("temp");
+                            int idHourly = hourly.getJSONArray("weather").getJSONObject(0).getInt("id");
                             weatherDescription = hourly.getJSONArray("weather").getJSONObject(0).getString("description");
                             iconHourly = hourly.getJSONArray("weather").getJSONObject(0).getString("icon");
 
@@ -434,11 +444,8 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(this, "Error fetching hourly data", Toast.LENGTH_SHORT).show();
                 }
         );
-
         requestQueue.add(stringRequest);
     }
-
-
 
     @SuppressLint("SetTextI18n")
     private void upDateUI() {
@@ -449,7 +456,7 @@ public class MainActivity extends AppCompatActivity {
         textPercentHumidity.setText(humidity + "%");
         textFeelsLike.setText(feelsLike + "°C");
         textWindSpeed.setText(speed + "m/s");
-        imgIconWeather.setImageResource(getResources().getIdentifier(String.valueOf(UpdateUI.getIconID(weatherIcon)), "drawable", getPackageName()));
+        imgIconWeather.setImageResource(getResources().getIdentifier(String.valueOf(getIconID(weatherIcon)), "drawable", getPackageName()));
     }
 
     @Override
