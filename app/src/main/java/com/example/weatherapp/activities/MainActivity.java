@@ -410,7 +410,7 @@ public class MainActivity extends AppCompatActivity {
                             // Parse timestamp (epoch) to Date
                             long dt = hourly.getLong("dt") * 1000L; // Convert seconds to milliseconds
                             Date date = new Date(dt);
-                            String hour = outputFormat.format(date);
+                            hour = outputFormat.format(date);
 
                             // Lấy dữ liệu thời tiết
                             tempHourly = hourly.getDouble("temp");
