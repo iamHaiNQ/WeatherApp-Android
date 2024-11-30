@@ -2,10 +2,10 @@ package com.example.weatherapp.entities;
 
 public class Hourly {
     private String hour;
-    private double temp;
+    private int temp;
     private String picPath;
 
-    public Hourly(String hour, double temp, String picPath) {
+    public Hourly(String hour, int temp, String picPath) {
         this.hour = hour;
         this.temp = temp;
         this.picPath = picPath;
@@ -19,11 +19,11 @@ public class Hourly {
         this.hour = hour;
     }
 
-    public double getTemp() {
+    public int getTemp() {
         return temp;
     }
 
-    public void setTemp(double temp) {
+    public void setTemp(int temp) {
         this.temp = temp;
     }
 

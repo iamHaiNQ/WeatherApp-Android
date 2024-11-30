@@ -68,9 +68,13 @@ public class FutureActivity extends AppCompatActivity {
         imgBack.setOnClickListener(v -> finish());
 
         Intent intent = getIntent();
-        String city = intent.getStringExtra("name");
-        latitude = intent.getDoubleExtra("latitude", 21);
-        longitude = intent.getDoubleExtra("longitude", 102);
+        latitude = intent.hasExtra("lat") ? intent.getDoubleExtra("lat", 0) : 0;
+        longitude = intent.hasExtra("lon") ? intent.getDoubleExtra("lon", 0) : 0;
+
+        if (latitude == 0 || longitude == 0) {
+            Toast.makeText(this, "Invalid location data", Toast.LENGTH_SHORT).show();
+            finish(); // Quay lại activity trước đó nếu không có dữ liệu
+        }
         textTemperatureToday.setText(intent.getStringExtra("temperature"));
         textWeatherToday.setText(intent.getStringExtra("state"));
         textFeels.setText(intent.getStringExtra("feelsLike"));
@@ -110,10 +114,10 @@ public class FutureActivity extends AppCompatActivity {
                         SimpleDateFormat outputFormat = new SimpleDateFormat("EEE", Locale.getDefault());
                         items.clear();
 
-                        int maxDay = 5;
+                        int maxDay = 6;
                         int count = 0;
 
-                        for (int i = 0; i < jsonArray.length() && count < maxDay; i++) {
+                        for (int i = 1; i < jsonArray.length() && count < maxDay; i++) {
                             JSONObject daily = jsonArray.getJSONObject(i);
 
                             long dt = daily.getLong("dt") * 1000L;

@@ -138,6 +138,8 @@ public class MainActivity extends AppCompatActivity {
                 getCurrentWeatherData(latitude, longitude);
                 getHourlyData(latitude, longitude);
                 getCityFromLatLon(latitude, longitude);
+
+                stopLocationUpdates();
             }
         };
 
@@ -172,18 +174,18 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }).check();
 
-//        imgSearch.setOnClickListener(v -> {
-//            String city = editTextSearch.getText().toString();
-//            if (city.isEmpty()) {
-//                Toast.makeText(this, "Please enter city", Toast.LENGTH_SHORT).show();
-//            } else {
-//                nameCity = city;
-//                textNameCity.setText(nameCity);
-//                textNameCity.setVisibility(View.VISIBLE);
-//                // Chuyển tên thành phố sang lat/lon
-//                convertCityToLatLon(city);
-//            }
-//        });
+        imgSearch.setOnClickListener(v -> {
+            String city = editTextSearch.getText().toString();
+            if (city.isEmpty()) {
+                Toast.makeText(this, "Please enter city", Toast.LENGTH_SHORT).show();
+            } else {
+                nameCity = city;
+                textNameCity.setText(nameCity);
+                textNameCity.setVisibility(View.VISIBLE);
+                // Chuyển tên thành phố sang lat/lon
+                convertCityToLatLon(city);
+            }
+        });
 
     }
 
@@ -242,9 +244,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if(mRequestingLocationUpdates && checkPermissions()){
-            startLocationUpdate();
-        }
+//        if(mRequestingLocationUpdates && checkPermissions()){
+//            startLocationUpdate();
+//        }
     }
 
     @Override
@@ -290,12 +292,13 @@ public class MainActivity extends AppCompatActivity {
             List<Address> addresses = geocoder.getFromLocationName(city, 1); // Lấy 1 kết quả phù hợp
             if ((addresses != null) && !addresses.isEmpty()) {
                 Address address = addresses.get(0);
-                double lat = address.getLatitude();
-                double lon = address.getLongitude();
+                latitude = address.getLatitude();
+                longitude = address.getLongitude();
 
                 // Gọi API thời tiết với tọa độ
-                getCurrentWeatherData(lat, lon);
-                getHourlyData(lat, lon);
+                getCurrentWeatherData(latitude, longitude);
+                getHourlyData(latitude, longitude);
+
             } else {
                 Toast.makeText(this, "City not found. Please check the name.", Toast.LENGTH_SHORT).show();
             }
@@ -350,7 +353,7 @@ public class MainActivity extends AppCompatActivity {
 
                             // Lấy dữ liệu từ JSON
                             String date = String.valueOf(current.getLong("dt"));
-                            dateTime = DateTimeFormatter.ofPattern("EEEE yyyy-MM-dd | HH:mm a", Locale.ENGLISH)
+                            dateTime = DateTimeFormatter.ofPattern("EEE dd-MM-yyyy", Locale.ENGLISH)
                                     .withZone(ZoneId.systemDefault())
                                     .format(Instant.ofEpochSecond(Long.parseLong(date)));
                             temp = current.getDouble("temp");
@@ -410,12 +413,12 @@ public class MainActivity extends AppCompatActivity {
                             String hour = outputFormat.format(date);
 
                             // Lấy dữ liệu thời tiết
-                            double tempHourly = hourly.getDouble("temp");
-                            String weatherDescription = hourly.getJSONArray("weather").getJSONObject(0).getString("description");
-                            String iconHourly = hourly.getJSONArray("weather").getJSONObject(0).getString("icon");
+                            tempHourly = hourly.getDouble("temp");
+                            weatherDescription = hourly.getJSONArray("weather").getJSONObject(0).getString("description");
+                            iconHourly = hourly.getJSONArray("weather").getJSONObject(0).getString("icon");
 
                             // Thêm vào danh sách
-                            items.add(new Hourly(hour, tempHourly, iconHourly));
+                            items.add(new Hourly(hour, (int) tempHourly, iconHourly));
                             count++;
                         }
 
@@ -442,7 +445,7 @@ public class MainActivity extends AppCompatActivity {
         textNameCity.setText(nameCity);
         textDateTime.setText(dateTime);
         textState.setText(weatherDescription);
-        textTemperature.setText(temp + "°C");
+        textTemperature.setText(String.valueOf((int) temp) + "°C");
         textPercentHumidity.setText(humidity + "%");
         textFeelsLike.setText(feelsLike + "°C");
         textWindSpeed.setText(speed + "m/s");
